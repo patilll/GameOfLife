@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>conways game of life - matte melange edition</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #1c2526;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            color: #ffffff;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            font-family: 'Orbitron', sans-serif;
+            border: 1px solid #cc3333;
+            border-radius: 5px;
+            background: #252525;
+            cursor: pointer;
+            transition: background 0.3s, color 0.3s;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        button:hover {
+            background: #cc3333;
+            color: #1c2526;
+        }
+        .stats {
+            color: #e6e6e6;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            font-family: 'Orbitron', sans-serif;
+        }
+        .speedcontrol {
+            margin-bottom: 20px;
+        }
+        input[type=range] {
+            width: 200px;
+            accent-color: #cc3333;
+        }
+        canvas {
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            background: #252525;
+        }
+    </style>
+</head>
+<body>
+    <div class=container>
+        <h1>Conway's Game Of Life</h1>
+        <div class=controls>
+            <button id=startbtn>start</button>
+            <button id=stopbtn>stop</button>
+            <button id=resetbtn>reset</button>
+            <button id=zoominbtn>zoom in</button>
+            <button id=zoomoutbtn>zoom out</button>
+        </div>
+        <div class=speedcontrol>
+            speed: <input type=range min=100 max=1000 value=500 id=speedslider step=100>
+        </div>
+        <div class=stats>
+            generation: <span id=generation>0</span> | population: <span id=population>0</span>
+        </div>
+        <canvas id=gamecanvas width=800 height=600></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gamecanvas')
+        const ctx = canvas.getContext('2d')
+        let gridsize = 20
+        let cols = Math.floor(canvas.width / gridsize)
+        let rows = Math.floor(canvas.height / gridsize)
+        let grid = creategrid()
+        let generation = 0
+        let population = 0
+        let animationid = null
+        let speed = 500
+
+        const startbtn = document.getElementById('startbtn')
+        const stopbtn = document.getElementById('stopbtn')
+        const resetbtn = document.getElementById('resetbtn')
+        const zoominbtn = document.getElementById('zoominbtn')
+        const zoomoutbtn = document.getElementById('zoomoutbtn')
+        const speedslider = document.getElementById('speedslider')
+        const gendisplay = document.getElementById('generation')
+        const popdisplay = document.getElementById('population')
+
+        function creategrid() {
+            return Array(rows).fill().map(() => Array(cols).fill(0))
+        }
+
+        function drawgrid() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height)
+            ctx.strokestyle = 'rgba(255, 255, 255, 0.05)'
+            for (let i = 0; i <= rows; i++) {
+                ctx.beginPath()
+                ctx.moveTo(0, i * gridsize)
+                ctx.lineTo(canvas.width, i * gridsize)
+                ctx.stroke()
+            }
+            for (let j = 0; j <= cols; j++) {
+                ctx.beginPath()
+                ctx.moveTo(j * gridsize, 0)
+                ctx.lineTo(j * gridsize, canvas.height)
+                ctx.stroke()
+            }
+            population = 0
+            for (let i = 0; i < rows; i++) {
+                for (let j = 0; j < cols; j++) {
+                    if (grid[i][j] === 1) {
+                        ctx.fillStyle = '#cc3333'
+                        ctx.fillRect(j * gridsize + 1, i * gridsize + 1, gridsize - 2, gridsize - 2)
+                        population++
+                    }
+                }
+            }
+            gendisplay.textContent = generation
+            popdisplay.textContent = population
+        }
+
+        function countneighbors(grid, x, y) {
+            let sum = 0
+            for (let i = -1; i < 2; i++) {
+                for (let j = -1; j < 2; j++) {
+                    const row = (x + i + rows) % rows
+                    const col = (y + j + cols) % cols
+                    sum += grid[row][col]
+                }
+            }
+            sum -= grid[x][y]
+            return sum
+        }
+
+        function nextgeneration() {
+            const newgrid = creategrid()
+            for (let i = 0; i < rows; i++) {
+                for (let j = 0; j < cols; j++) {
+                    const neighbors = countneighbors(grid, i, j)
+                    if (grid[i][j] === 1) {
+                        newgrid[i][j] = neighbors === 2 || neighbors === 3 ? 1 : 0
+                    } else {
+                        newgrid[i][j] = neighbors === 3 ? 1 : 0
+                    }
+                }
+            }
+            grid = newgrid
+            generation++
+            drawgrid()
+        }
+
+        function animate() {
+            nextgeneration()
+            animationid = setTimeout(() => {
+                requestAnimationFrame(animate)
+            }, speed)
+        }
+
+        startbtn.addEventListener('click', () => {
+            if (!animationid) animate()
+        })
+
+        stopbtn.addEventListener('click', () => {
+            if (animationid) {
+                clearTimeout(animationid)
+                animationid = null
+            }
+        })
+
+        resetbtn.addEventListener('click', () => {
+            if (animationid) {
+                clearTimeout(animationid)
+                animationid = null
+            }
+            grid = creategrid()
+            generation = 0
+            drawgrid()
+        })
+
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect()
+            const x = Math.floor((e.clientX - rect.left) / gridsize)
+            const y = Math.floor((e.clientY - rect.top) / gridsize)
+            grid[y][x] = grid[y][x] === 1 ? 0 : 1
+            drawgrid()
+        })
+
+        zoominbtn.addEventListener('click', () => {
+            if (gridsize < 40) {
+                gridsize += 5
+                updategridsize()
+            }
+        })
+
+        zoomoutbtn.addEventListener('click', () => {
+            if (gridsize > 10) {
+                gridsize -= 5
+                updategridsize()
+            }
+        })
+
+        speedslider.addEventListener('input', () => {
+            speed = speedslider.value
+        })
+
+        function updategridsize() {
+            const oldcols = cols
+            const oldrows = rows
+            cols = Math.floor(canvas.width / gridsize)
+            rows = Math.floor(canvas.height / gridsize)
+            const newgrid = creategrid()
+            const offsetx = Math.floor((cols - oldcols) / 2)
+            const offsety = Math.floor((rows - oldrows) / 2)
+            for (let i = 0; i < oldrows; i++) {
+                for (let j = 0; j < oldcols; j++) {
+                    if (i + offsety >= 0 && i + offsety < rows && j + offsetx >= 0 && j + offsetx < cols) {
+                        newgrid[i + offsety][j + offsetx] = grid[i][j]
+                    }
+                }
+            }
+            grid = newgrid
+            drawgrid()
+        }
+
+        drawgrid()
+    </script>
+</body>
+</html>
