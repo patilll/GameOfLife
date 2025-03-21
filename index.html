@@ -14,7 +14,7 @@
             min-height: 100vh;
             background: #1c2526;
             font-family: 'Arial', sans-serif;
-            overflow: hidden;
+            overflow: auto;
         }
         .container {
             text-align: center;
@@ -22,6 +22,7 @@
             background: rgba(255, 255, 255, 0.03);
             border-radius: 15px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            max-width: 100%;
         }
         h1 {
             font-family: 'Orbitron', sans-serif;
@@ -36,6 +37,7 @@
             justify-content: center;
             gap: 10px;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
         button {
             padding: 10px 20px;
@@ -54,12 +56,6 @@
             background: #cc3333;
             color: #1c2526;
         }
-        .stats {
-            color: #e6e6e6;
-            font-size: 1.2em;
-            margin-bottom: 10px;
-            font-family: 'Orbitron', sans-serif;
-        }
         .speedcontrol {
             margin-bottom: 20px;
         }
@@ -67,10 +63,27 @@
             width: 200px;
             accent-color: #cc3333;
         }
+        .stats {
+            color: #e6e6e6;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            font-family: 'Orbitron', sans-serif;
+        }
         canvas {
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
             background: #252525;
+            max-width: 100%;
+            height: auto;
+        }
+        @media (max-width: 800px) {
+            canvas {
+                width: 100%;
+            }
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
         }
     </style>
 </head>
